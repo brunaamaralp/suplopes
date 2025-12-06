@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Account {
+  id        Int           @id @default(autoincrement())
+  name      String
+  type      String        // ex: "conta_corrente", "cartao", "caixa"
+  balance   Float         @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  transactions Transaction[]
+  reconciliations Reconciliation[]
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  code        String?       // Código hierárquico (ex: 1.1.01)
+  name        String
+  type        String        // "receita" | "despesa"
+  isActive    Boolean       @default(true)
+  group       String?       // ID da categoria pai
+  nature      String?       // "C" (crédito) | "D" (débito)
+  level       Int?          // Nível na hierarquia
+  parentCode  String?       // Código do pai
+  isSystem    Boolean       @default(false)
+  isEditable  Boolean       @default(true)
+  canDelete   Boolean       @default(true)
+  side        String?       // "RECEITA" | "DESPESA/CUSTO"
+  sortOrder   Int?          // Ordem de exibição
+  accountType String?       // Tipo de conta contábil
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          Int       @id @default(autoincrement())
+  date        DateTime
+  description String
+  amount      Float
+  type        String    // "entrada" | "saida"
+  accountId   Int
+  categoryId  Int
+
+  account     Account   @relation(fields: [accountId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Reconciliation {
+  id            Int      @id @default(autoincrement())
+  date          DateTime
+  bankAccountId Int
+  systemBalance Float
+  bankBalance   Float
+  difference    Float?
+  status        String?
+  notes         String?
+
+  account       Account  @relation(fields: [bankAccountId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

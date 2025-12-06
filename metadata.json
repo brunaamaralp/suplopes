@@ -1,0 +1,5 @@
+{
+  "name": "SuperMarket FinControl",
+  "description": "Sistema de controle financeiro profissional para supermercados com gestão de fluxo de caixa, conciliação bancária e planos de contas.",
+  "requestFramePermissions": []
+}
