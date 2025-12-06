@@ -8,14 +8,14 @@
   --color-card: #ffffff;
   --color-input: #f1f5f9;
 
-  /* Sidebar blue theme - matching logo */
-  --color-sidebar: #003d7a;
-  --color-sidebar-dark: #002d5c;
+  /* Sidebar blue theme - matching logo exactly */
+  --color-sidebar: #0263a2;
+  --color-sidebar-dark: #0263a2;
 
   /* Primary colors (blue from logo) */
-  --color-primary: #003d7a;
-  --color-primary-hover: #002d5c;
-  --color-primary-light: #0051a3;
+  --color-primary: #0263a2;
+  --color-primary-hover: #015285;
+  --color-primary-light: #0378c2;
 
   /* Secondary colors (yellow from logo) */
   --color-secondary: #FDB913;
@@ -29,8 +29,8 @@
   --color-negative: #ef4444;
   --color-negative-hover: #dc2626;
 
-  --color-info: #0066A1;
-  --color-info-hover: #005082;
+  --color-info: #0263a2;
+  --color-info-hover: #015285;
 
   /* Text colors for light theme */
   --color-text-primary: #1e293b;
@@ -78,6 +78,6 @@
   }
 
   .sidebar-bg {
-    background: linear-gradient(180deg, var(--color-sidebar) 0%, var(--color-sidebar-dark) 100%);
+    background: #0263a2;
   }
 }
