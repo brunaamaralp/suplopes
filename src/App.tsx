@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { FinanceProvider } from './context/FinanceContext';
 import { useFinance } from './context/FinanceContext';
 import { Login } from './views/Login';
-import { Register } from './views/Register';
 import { ForgotPassword } from './views/ForgotPassword';
 const DashboardLazy = React.lazy(() => import('./views/Dashboard').then(m => ({ default: m.Dashboard })));
 const PlanoContasLazy = React.lazy(() => import('./views/PlanoContas').then(m => ({ default: m.PlanoContas })));
@@ -15,7 +14,7 @@ import { ViewState } from './types';
 import { LayoutDashboard, FileText, ArrowRightLeft, CheckSquare, PieChart, Menu, X, Landmark, CheckCircle, AlertTriangle, LogOut, User } from 'lucide-react';
 import logoUrl from './assets/logo.png';
 
-type AuthView = 'login' | 'register' | 'forgot-password';
+type AuthView = 'login' | 'forgot-password';
 
 const SidebarItem: React.FC<{
   icon: React.ElementType,
@@ -163,12 +162,9 @@ const AuthScreen: React.FC = () => {
     case 'login':
       return (
         <Login
-          onSwitchToRegister={() => setAuthView('register')}
           onForgotPassword={() => setAuthView('forgot-password')}
         />
       );
-    case 'register':
-      return <Register onSwitchToLogin={() => setAuthView('login')} />;
     case 'forgot-password':
       return <ForgotPassword onBackToLogin={() => setAuthView('login')} />;
     default:

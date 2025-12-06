@@ -4,11 +4,10 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import logoUrl from '../assets/logo.png';
 
 interface LoginProps {
-  onSwitchToRegister: () => void;
   onForgotPassword: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onForgotPassword }) => {
+export const Login: React.FC<LoginProps> = ({ onForgotPassword }) => {
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -143,16 +142,6 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onForgotPasswo
             </button>
           </form>
 
-          {/* Register Link */}
-          <p className="mt-8 text-center text-textSecondary text-sm">
-            Não tem uma conta?{' '}
-            <button
-              onClick={onSwitchToRegister}
-              className="text-primary hover:text-primary-hover font-medium transition-colors"
-            >
-              Cadastre-se
-            </button>
-          </p>
         </div>
       </div>
     </div>

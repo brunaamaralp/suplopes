@@ -8,14 +8,14 @@
   --color-card: #ffffff;
   --color-input: #f1f5f9;
 
-  /* Sidebar blue theme */
-  --color-sidebar: #0066A1;
-  --color-sidebar-dark: #004d7a;
+  /* Sidebar blue theme - matching logo */
+  --color-sidebar: #003d7a;
+  --color-sidebar-dark: #002d5c;
 
   /* Primary colors (blue from logo) */
-  --color-primary: #0066A1;
-  --color-primary-hover: #005082;
-  --color-primary-light: #1a7bb8;
+  --color-primary: #003d7a;
+  --color-primary-hover: #002d5c;
+  --color-primary-light: #0051a3;
 
   /* Secondary colors (yellow from logo) */
   --color-secondary: #FDB913;
