@@ -1,6 +1,10 @@
 import React, { useState, Suspense } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { FinanceProvider } from './context/FinanceContext';
 import { useFinance } from './context/FinanceContext';
+import { Login } from './views/Login';
+import { Register } from './views/Register';
+import { ForgotPassword } from './views/ForgotPassword';
 const DashboardLazy = React.lazy(() => import('./views/Dashboard').then(m => ({ default: m.Dashboard })));
 const PlanoContasLazy = React.lazy(() => import('./views/PlanoContas').then(m => ({ default: m.PlanoContas })));
 const MovimentacoesLazy = React.lazy(() => import('./views/Movimentacoes').then(m => ({ default: m.Movimentacoes })));
@@ -8,8 +12,10 @@ const ConferenciaLazy = React.lazy(() => import('./views/Conferencia').then(m =>
 const FluxoCaixaLazy = React.lazy(() => import('./views/FluxoCaixa').then(m => ({ default: m.FluxoCaixa })));
 const ContasLazy = React.lazy(() => import('./views/Contas').then(m => ({ default: m.Contas })));
 import { ViewState } from './types';
-import { LayoutDashboard, FileText, ArrowRightLeft, CheckSquare, PieChart, Menu, X, Landmark, CheckCircle, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, FileText, ArrowRightLeft, CheckSquare, PieChart, Menu, X, Landmark, CheckCircle, AlertTriangle, LogOut, User } from 'lucide-react';
 import logoUrl from './assets/logo.png';
+
+type AuthView = 'login' | 'register' | 'forgot-password';
 
 const SidebarItem: React.FC<{
   icon: React.ElementType,
@@ -29,7 +35,9 @@ const SidebarItem: React.FC<{
   </button>
 );
 
-const App: React.FC = () => {
+// Componente principal autenticado
+const AuthenticatedApp: React.FC = () => {
+  const { user, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<ViewState>('DASHBOARD');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -53,6 +61,12 @@ const App: React.FC = () => {
     { id: 'CONTAS', label: 'Contas Bancárias', icon: Landmark },
     { id: 'PLANO_CONTAS', label: 'Plano de Contas', icon: FileText },
   ];
+
+  const handleSignOut = async () => {
+    if (confirm('Deseja realmente sair?')) {
+      await signOut();
+    }
+  };
 
   return (
     <FinanceProvider>
@@ -98,8 +112,28 @@ const App: React.FC = () => {
             ))}
           </nav>
 
-          <div className="absolute bottom-4 left-0 w-full px-6 text-center">
-            <p className="text-[10px] text-textSecondary opacity-50">v1.0.0 &copy; 2024</p>
+          {/* User Info & Logout */}
+          <div className="absolute bottom-0 left-0 w-full p-4 border-t border-white/10">
+            <div className="flex items-center gap-3 px-3 py-2 mb-2">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+                <User size={18} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user?.user_metadata?.name || 'Usuário'}
+                </p>
+                <p className="text-xs text-white/60 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <LogOut size={18} />
+              <span className="text-sm font-medium">Sair</span>
+            </button>
           </div>
         </aside>
 
@@ -118,6 +152,54 @@ const App: React.FC = () => {
         </main>
       </div>
     </FinanceProvider>
+  );
+};
+
+// Componente de autenticação
+const AuthScreen: React.FC = () => {
+  const [authView, setAuthView] = useState<AuthView>('login');
+
+  switch (authView) {
+    case 'login':
+      return (
+        <Login
+          onSwitchToRegister={() => setAuthView('register')}
+          onForgotPassword={() => setAuthView('forgot-password')}
+        />
+      );
+    case 'register':
+      return <Register onSwitchToLogin={() => setAuthView('login')} />;
+    case 'forgot-password':
+      return <ForgotPassword onBackToLogin={() => setAuthView('login')} />;
+    default:
+      return null;
+  }
+};
+
+// Componente principal que decide entre auth e app
+const AppContent: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white/70 text-sm">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return user ? <AuthenticatedApp /> : <AuthScreen />;
+};
+
+// App wrapper com providers
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 
