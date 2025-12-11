@@ -225,9 +225,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       alert(`Não é possível excluir lançamentos de um período fechado (Trava: ${new Date(closingDate!).toLocaleDateString('pt-BR')}).`);
       return { ok: false };
     }
-    setTransactions(prev => prev.filter(item => item.id !== id));
     try {
       await deleteTransactionApi(id);
+      // Só remove do estado após confirmação da API
+      setTransactions(prev => prev.filter(item => item.id !== id));
       notify('success', 'Movimentação excluída');
       return { ok: true };
     } catch (e) {
@@ -307,9 +308,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       alert("Não é possível excluir uma conta que possui movimentações vinculadas.");
       return { ok: false };
     }
-    setAccounts(prev => prev.filter(item => item.id !== id));
     try {
       await deleteAccountApi(id);
+      // Só remove do estado após confirmação da API
+      setAccounts(prev => prev.filter(item => item.id !== id));
       notify('success', 'Conta excluída');
       return { ok: true };
     } catch (e) {

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
+import { StorageService } from '../services/storage';
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
+      // Define userId no StorageService para isolamento de cache
+      StorageService.setUserId(session?.user?.id ?? null);
       setLoading(false);
     };
 
@@ -35,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        // Atualiza userId no StorageService
+        StorageService.setUserId(session?.user?.id ?? null);
         setLoading(false);
       }
     );
@@ -72,6 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Limpa cache local do usuário antes de deslogar
+    StorageService.clearUserData();
+    StorageService.setUserId(null);
     await supabase.auth.signOut();
   };
 
