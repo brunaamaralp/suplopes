@@ -155,23 +155,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <Card>
           <h3 className="text-lg font-semibold mb-4 text-textPrimary">Contas</h3>
           <div className="space-y-4">
-            {accounts.map(acc => {
-              const accIncome = transactions.filter(t => t.accountId === acc.id && t.type === MovementType.INCOME).reduce((s, t) => s + t.amount, 0);
-              const accExpense = transactions.filter(t => t.accountId === acc.id && t.type === MovementType.EXPENSE).reduce((s, t) => s + t.amount, 0);
-              const balance = (acc.initialBalance || 0) + accIncome - accExpense;
+            {accounts.length === 0 ? (
+              <div className="text-center py-8">
+                <Wallet size={48} className="mx-auto text-textMuted mb-3 opacity-50" />
+                <p className="text-textSecondary mb-1">Nenhuma conta cadastrada</p>
+                <p className="text-textMuted text-sm mb-4">Cadastre sua primeira conta para começar</p>
+                <button
+                  onClick={() => onNavigate('CONTAS')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+                >
+                  <DollarSign size={16} />
+                  Criar primeira conta
+                </button>
+              </div>
+            ) : (
+              accounts.map(acc => {
+                const accIncome = transactions.filter(t => t.accountId === acc.id && t.type === MovementType.INCOME).reduce((s, t) => s + t.amount, 0);
+                const accExpense = transactions.filter(t => t.accountId === acc.id && t.type === MovementType.EXPENSE).reduce((s, t) => s + t.amount, 0);
+                const balance = (acc.initialBalance || 0) + accIncome - accExpense;
 
-              return (
-                <div key={acc.id} className="flex justify-between items-center p-3 rounded-lg bg-input/50 border border-glass">
-                  <div>
-                    <p className="font-medium text-textPrimary">{acc.name}</p>
-                    <p className="text-xs text-textSecondary">Inicial: {FORMAT_CURRENCY(acc.initialBalance)}</p>
+                return (
+                  <div key={acc.id} className="flex justify-between items-center p-3 rounded-lg bg-input/50 border border-glass">
+                    <div>
+                      <p className="font-medium text-textPrimary">{acc.name}</p>
+                      <p className="text-xs text-textSecondary">Inicial: {FORMAT_CURRENCY(acc.initialBalance)}</p>
+                    </div>
+                    <span className={`font-bold ${balance >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {FORMAT_CURRENCY(balance)}
+                    </span>
                   </div>
-                  <span className={`font-bold ${balance >= 0 ? 'text-positive' : 'text-negative'}`}>
-                    {FORMAT_CURRENCY(balance)}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </Card>
       </div>

@@ -164,7 +164,7 @@ export const Movimentacoes: React.FC = () => {
         });
         return !hasChildren;
       });
-      
+
       setFormData({
         date: new Date().toISOString().split('T')[0],
         type: MovementType.EXPENSE,
@@ -344,7 +344,7 @@ export const Movimentacoes: React.FC = () => {
   const availableCategories = useMemo(() => {
     // First, determine the expected type for the form
     const expectedType = formData.type === MovementType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE;
-    
+
     return categories.filter(c => {
       if (!c.isActive) return false;
 
@@ -669,7 +669,18 @@ export const Movimentacoes: React.FC = () => {
               );
             })}
             {currentTransactions.length === 0 && (
-              <div className="text-center py-8 text-textSecondary">Nenhuma movimentação encontrada.</div>
+              <div className="text-center py-12">
+                <Search size={48} className="mx-auto text-textMuted mb-3 opacity-50" />
+                <p className="text-textSecondary font-medium mb-1">Nenhuma movimentação encontrada</p>
+                <p className="text-textMuted text-sm mb-4">Registre sua primeira entrada ou saída</p>
+                <button
+                  onClick={() => handleOpenForm()}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+                >
+                  <Plus size={16} />
+                  Novo Lançamento
+                </button>
+              </div>
             )}
           </div>
         ) : (
@@ -749,7 +760,22 @@ export const Movimentacoes: React.FC = () => {
                   );
                 })}
                 {currentTransactions.length === 0 && (
-                  <tr><td colSpan={7} className="text-center py-8 text-textSecondary">Nenhuma movimentação encontrada.</td></tr>
+                  <tr>
+                    <td colSpan={7} className="py-0">
+                      <div className="text-center py-12">
+                        <Search size={48} className="mx-auto text-textMuted mb-3 opacity-50" />
+                        <p className="text-textSecondary font-medium mb-1">Nenhuma movimentação encontrada</p>
+                        <p className="text-textMuted text-sm mb-4">Registre sua primeira entrada ou saída</p>
+                        <button
+                          onClick={() => handleOpenForm()}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+                        >
+                          <Plus size={16} />
+                          Novo Lançamento
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -809,24 +835,24 @@ export const Movimentacoes: React.FC = () => {
                   onChange={e => {
                     const newType = e.target.value as MovementType;
                     const expectedType = newType === MovementType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE;
-                    
+
                     // Find an analytical category (leaf node) matching the new type
                     const analyticalCat = newType === MovementType.TRANSFER
                       ? null
                       : categories.find(c => {
-                          if (!c.isActive || c.type !== expectedType) return false;
-                          // Check if it's a leaf node (no children)
-                          const categoryCode = c.code || c.id;
-                          const hasChildren = categories.some(other => {
-                            const otherCode = other.code || other.id;
-                            return otherCode !== categoryCode && otherCode.startsWith(categoryCode + '.');
-                          });
-                          return !hasChildren;
+                        if (!c.isActive || c.type !== expectedType) return false;
+                        // Check if it's a leaf node (no children)
+                        const categoryCode = c.code || c.id;
+                        const hasChildren = categories.some(other => {
+                          const otherCode = other.code || other.id;
+                          return otherCode !== categoryCode && otherCode.startsWith(categoryCode + '.');
                         });
-                    
+                        return !hasChildren;
+                      });
+
                     const newCat = analyticalCat?.id || '';
                     const newCatName = analyticalCat?.name || '';
-                    
+
                     setFormData({
                       ...formData,
                       type: newType,
