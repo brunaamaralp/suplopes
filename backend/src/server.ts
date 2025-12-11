@@ -59,9 +59,11 @@ app.use('/api', authMiddleware)
 // ----------------------
 // ROTAS DE CONTAS
 // ----------------------
-app.get('/api/accounts', async (_req, res) => {
+app.get('/api/accounts', async (req: AuthenticatedRequest, res) => {
   try {
-    const accounts = await prisma.account.findMany()
+    const accounts = await prisma.account.findMany({
+      where: { userId: req.user.id }
+    })
     res.json(accounts)
   } catch (error) {
     console.error(error)
@@ -83,6 +85,7 @@ app.post('/api/accounts', async (req, res) => {
 
     const account = await prisma.account.create({
       data: {
+        userId: (req as AuthenticatedRequest).user.id,
         name,
         type: type || 'conta_corrente',
         balance: isNaN(finalBalance) ? 0 : finalBalance
@@ -116,7 +119,7 @@ app.put('/api/accounts/:id', async (req, res) => {
     }
 
     const account = await prisma.account.update({
-      where: { id },
+      where: { id, userId: (req as AuthenticatedRequest).user.id },
       data,
     })
     res.json(account)
@@ -126,10 +129,10 @@ app.put('/api/accounts/:id', async (req, res) => {
   }
 })
 
-app.delete('/api/accounts/:id', async (req, res) => {
+app.delete('/api/accounts/:id', async (req: AuthenticatedRequest, res) => {
   try {
     const id = Number(req.params.id)
-    await prisma.account.delete({ where: { id } })
+    await prisma.account.delete({ where: { id, userId: req.user.id } })
     res.status(204).send()
   } catch (error) {
     console.error(error)
@@ -262,9 +265,10 @@ app.post('/api/categories/seed', async (req, res) => {
 // ----------------------
 // ROTAS DE TRANSAÇÕES
 // ----------------------
-app.get('/api/transactions', async (_req, res) => {
+app.get('/api/transactions', async (req: AuthenticatedRequest, res) => {
   try {
     const transactions = await prisma.transaction.findMany({
+      where: { userId: req.user.id },
       include: { account: true, category: true },
     })
     res.json(transactions)
@@ -295,6 +299,7 @@ app.post('/api/transactions', async (req, res) => {
 
     const transaction = await prisma.transaction.create({
       data: {
+        userId: (req as AuthenticatedRequest).user.id,
         date: new Date(date),
         description: description || '',
         amount,
@@ -332,7 +337,7 @@ app.put('/api/transactions/:id', async (req, res) => {
     }
 
     const transaction = await prisma.transaction.update({
-      where: { id },
+      where: { id, userId: (req as AuthenticatedRequest).user.id },
       data: {
         date: new Date(date),
         description: description || '',
@@ -350,10 +355,10 @@ app.put('/api/transactions/:id', async (req, res) => {
   }
 })
 
-app.delete('/api/transactions/:id', async (req, res) => {
+app.delete('/api/transactions/:id', async (req: AuthenticatedRequest, res) => {
   try {
     const id = Number(req.params.id)
-    await prisma.transaction.delete({ where: { id } })
+    await prisma.transaction.delete({ where: { id, userId: req.user.id } })
     res.status(204).send()
   } catch (error) {
     res.status(500).json({ error: 'Erro ao deletar transação' })
@@ -363,10 +368,10 @@ app.delete('/api/transactions/:id', async (req, res) => {
 // ----------------------
 // ROTAS DE CONCILIAÇÃO
 // ----------------------
-app.get('/api/corrections', async (req, res) => {
+app.get('/api/corrections', async (req: AuthenticatedRequest, res) => {
   try {
     const { bankAccountId, start, end } = req.query;
-    const where: any = {};
+    const where: any = { userId: req.user.id };
 
     if (bankAccountId) where.bankAccountId = Number(bankAccountId);
     if (start && end) {
@@ -393,6 +398,7 @@ app.post('/api/corrections', async (req, res) => {
 
     const correction = await prisma.reconciliation.create({
       data: {
+        userId: (req as AuthenticatedRequest).user.id,
         date: new Date(date),
         bankAccountId: Number(bankAccountId),
         systemBalance: Number(systemBalance),
@@ -415,7 +421,7 @@ app.put('/api/corrections/:id', async (req, res) => {
     const { date, bankAccountId, systemBalance, bankBalance, difference, status, notes } = req.body;
 
     const correction = await prisma.reconciliation.update({
-      where: { id },
+      where: { id, userId: (req as AuthenticatedRequest).user.id },
       data: {
         date: new Date(date),
         bankAccountId: Number(bankAccountId),

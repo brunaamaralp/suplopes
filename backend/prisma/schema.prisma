@@ -8,6 +8,7 @@ generator client {
 
 model Account {
   id        Int           @id @default(autoincrement())
+  userId    String        // UUID do usuário Supabase
   name      String
   type      String        // ex: "conta_corrente", "cartao", "caixa"
   balance   Float         @default(0)
@@ -15,6 +16,8 @@ model Account {
   updatedAt DateTime      @updatedAt
   transactions Transaction[]
   reconciliations Reconciliation[]
+
+  @@index([userId])
 }
 
 model Category {
@@ -40,6 +43,7 @@ model Category {
 
 model Transaction {
   id          Int       @id @default(autoincrement())
+  userId      String    // UUID do usuário Supabase
   date        DateTime
   description String
   amount      Float
@@ -52,10 +56,13 @@ model Transaction {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model Reconciliation {
   id            Int      @id @default(autoincrement())
+  userId        String   // UUID do usuário Supabase
   date          DateTime
   bankAccountId Int
   systemBalance Float
@@ -68,4 +75,7 @@ model Reconciliation {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
+
