@@ -24,6 +24,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // or simply checking if there is a record for the date regardless of account.
   const hasReconciledYesterday = corrections.some(c => c.date === yesterdayStr);
 
+  // Only show reconciliation alert if user has started using the system
+  // (has at least one account AND at least one transaction)
+  const hasStartedUsing = accounts.length > 0 && transactions.length > 0;
+  const shouldShowReconciliationAlert = hasStartedUsing && !hasReconciledYesterday;
+
   // Simple aggregations
   const totalIncome = transactions
     .filter(t => t.type === MovementType.INCOME)
@@ -51,8 +56,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </header>
 
-      {/* Daily Reconciliation Alert (Yesterday) */}
-      {!hasReconciledYesterday && (
+      {/* Daily Reconciliation Alert (Yesterday) - Only show if user has started using the system */}
+      {shouldShowReconciliationAlert && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-yellow-500/20 rounded-lg text-yellow-500">
