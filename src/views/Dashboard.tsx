@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { Card, Button } from '../components/ui';
 import { FORMAT_CURRENCY, MovementType, ViewState } from '../types';
@@ -12,22 +12,69 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const { transactions, accounts, corrections } = useFinance();
 
-  // Check for daily reconciliation (Yesterday logic)
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  // Calculate pending reconciliation days
+  const pendingReconciliationInfo = useMemo(() => {
+    // Only check if user has started using (has accounts AND transactions)
+    if (accounts.length === 0 || transactions.length === 0) {
+      return { pendingDays: [], count: 0 };
+    }
 
-  // Check if ANY account was reconciled yesterday. 
-  // Ideally, we might want to check if ALL active accounts were reconciled, 
-  // but for a simple alert, checking if at least one record exists for yesterday is a good start,
-  // or simply checking if there is a record for the date regardless of account.
-  const hasReconciledYesterday = corrections.some(c => c.date === yesterdayStr);
+    // Find the first transaction date
+    const sortedDates = transactions
+      .map(t => t.date.substring(0, 10))
+      .sort();
+    const firstTransactionDate = sortedDates[0];
 
-  // Only show reconciliation alert if user has started using the system
-  // (has at least one account AND at least one transaction)
-  const hasStartedUsing = accounts.length > 0 && transactions.length > 0;
-  const shouldShowReconciliationAlert = hasStartedUsing && !hasReconciledYesterday;
+    if (!firstTransactionDate) {
+      return { pendingDays: [], count: 0 };
+    }
+
+    // Get all reconciled dates
+    const reconciledDates = new Set(corrections.map(c => c.date.substring(0, 10)));
+
+    // Calculate days from first transaction to yesterday
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const startDate = new Date(firstTransactionDate + 'T00:00:00');
+    startDate.setHours(0, 0, 0, 0);
+
+    // Don't check dates before the first transaction
+    const checkStart = startDate > yesterday ? yesterday : startDate;
+
+    // Find all days between first transaction and yesterday that are NOT reconciled
+    const pendingDays: string[] = [];
+    const currentDate = new Date(checkStart);
+
+    while (currentDate <= yesterday) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      if (!reconciledDates.has(dateStr)) {
+        pendingDays.push(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return {
+      pendingDays,
+      count: pendingDays.length,
+      oldest: pendingDays[0],
+      newest: pendingDays[pendingDays.length - 1]
+    };
+  }, [transactions, accounts, corrections]);
+
+  const shouldShowReconciliationAlert = pendingReconciliationInfo.count > 0;
+
+  // Format pending days message
+  const getPendingMessage = () => {
+    const { count, oldest, newest } = pendingReconciliationInfo;
+    if (count === 0) return '';
+    if (count === 1) {
+      return `Você ainda não registrou a conferência de saldos de ${new Date(oldest + 'T00:00:00').toLocaleDateString('pt-BR')}.`;
+    }
+    return `Você tem ${count} dias sem conferência de saldos (${new Date(oldest + 'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(newest + 'T00:00:00').toLocaleDateString('pt-BR')}).`;
+  };
 
   // Simple aggregations
   const totalIncome = transactions
@@ -56,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </header>
 
-      {/* Daily Reconciliation Alert (Yesterday) - Only show if user has started using the system */}
+      {/* Daily Reconciliation Alert - Shows all pending days */}
       {shouldShowReconciliationAlert && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
@@ -64,9 +111,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <AlertTriangle size={24} />
             </div>
             <div>
-              <h3 className="text-yellow-900 font-semibold">Conferência Pendente</h3>
+              <h3 className="text-yellow-900 font-semibold">
+                {pendingReconciliationInfo.count === 1 ? 'Conferência Pendente' : `${pendingReconciliationInfo.count} Conferências Pendentes`}
+              </h3>
               <p className="text-yellow-800 text-sm">
-                Você ainda não registrou a conferência de saldos de <strong>Ontem ({yesterday.toLocaleDateString('pt-BR')})</strong>.
+                {getPendingMessage()}
               </p>
             </div>
           </div>
