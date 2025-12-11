@@ -1,9 +1,10 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
+import { createClient } from '@supabase/supabase-js'
 
 dotenv.config()
 
@@ -14,9 +15,46 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
+// Cliente Supabase para validação de tokens
+const supabaseUrl = process.env.SUPABASE_URL || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || ''
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+// Interface para request autenticado
+interface AuthenticatedRequest extends Request {
+  user?: any
+}
+
+// Middleware de autenticação
+const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  // Permitir requisições sem autenticação em ambiente de desenvolvimento
+  if (process.env.NODE_ENV !== 'production' && !process.env.SUPABASE_URL) {
+    return next()
+  }
+
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Token não fornecido' })
+    return
+  }
+
+  const token = authHeader.split(' ')[1]
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+
+  if (error || !user) {
+    res.status(401).json({ error: 'Token inválido' })
+    return
+  }
+
+  req.user = user
+  next()
+}
 
 app.use(cors())
 app.use(express.json())
+
+// Aplicar middleware de autenticação em todas as rotas /api
+app.use('/api', authMiddleware)
 
 // ----------------------
 // ROTAS DE CONTAS
