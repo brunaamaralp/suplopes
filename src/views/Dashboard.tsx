@@ -4,6 +4,7 @@ import { Card, Button } from '../components/ui';
 import { FORMAT_CURRENCY, MovementType, ViewState } from '../types';
 import { TrendingUp, TrendingDown, DollarSign, Wallet, AlertTriangle, ArrowRight } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { getTodayBrasilia, getYesterdayBrasilia, formatDateBrasilia } from '../utils/dateUtils';
 
 interface DashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -12,7 +13,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const { transactions, accounts, corrections } = useFinance();
 
-  // Calculate pending reconciliation days
+  // Calculate pending reconciliation days using Brasília timezone
   const pendingReconciliationInfo = useMemo(() => {
     // Only check if user has started using (has accounts AND transactions)
     if (accounts.length === 0 || transactions.length === 0) {
@@ -32,14 +33,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     // Get all reconciled dates
     const reconciledDates = new Set(corrections.map(c => c.date.substring(0, 10)));
 
-    // Calculate days from first transaction to yesterday
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Use Brasília timezone for today and yesterday
+    const todayStr = getTodayBrasilia();
+    const yesterdayStr = getYesterdayBrasilia();
 
-    const startDate = new Date(firstTransactionDate + 'T00:00:00');
-    startDate.setHours(0, 0, 0, 0);
+    // Parse dates for comparison
+    const yesterday = new Date(yesterdayStr + 'T12:00:00-03:00');
+    const startDate = new Date(firstTransactionDate + 'T12:00:00-03:00');
 
     // Don't check dates before the first transaction
     const checkStart = startDate > yesterday ? yesterday : startDate;
@@ -49,7 +49,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     const currentDate = new Date(checkStart);
 
     while (currentDate <= yesterday) {
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(currentDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
       if (!reconciledDates.has(dateStr)) {
         pendingDays.push(dateStr);
       }
@@ -66,14 +70,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   const shouldShowReconciliationAlert = pendingReconciliationInfo.count > 0;
 
-  // Format pending days message
+  // Format pending days message using Brasília timezone
   const getPendingMessage = () => {
     const { count, oldest, newest } = pendingReconciliationInfo;
     if (count === 0) return '';
     if (count === 1) {
-      return `Você ainda não registrou a conferência de saldos de ${new Date(oldest + 'T00:00:00').toLocaleDateString('pt-BR')}.`;
+      return `Você ainda não registrou a conferência de saldos de ${formatDateBrasilia(oldest)}.`;
     }
-    return `Você tem ${count} dias sem conferência de saldos (${new Date(oldest + 'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(newest + 'T00:00:00').toLocaleDateString('pt-BR')}).`;
+    return `Você tem ${count} dias sem conferência de saldos (${formatDateBrasilia(oldest)} a ${formatDateBrasilia(newest)}).`;
   };
 
   // Simple aggregations

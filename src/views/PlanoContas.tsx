@@ -398,10 +398,15 @@ export const PlanoContas: React.FC = () => {
 
                   {categories.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-16 text-center text-textSecondary flex flex-col items-center justify-center">
-                        <FolderTree size={48} className="mb-4 text-slate-300" />
-                        <p className="text-lg font-medium text-slate-500">Nenhuma conta encontrada</p>
-                        <p className="text-sm text-slate-400">Comece adicionando uma nova conta ou importe um modelo.</p>
+                      <td colSpan={4} className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <FolderTree size={48} className="mb-4 text-slate-300" />
+                          <p className="text-lg font-medium text-slate-500">Nenhuma conta encontrada</p>
+                          <p className="text-sm text-slate-400 mb-4">Comece adicionando uma nova conta para organizar seu plano.</p>
+                          <Button onClick={() => { setIsEditing(null); setFormData({ code: '', name: '', type: TransactionType.EXPENSE, group: '' }); setShowModal(true); }}>
+                            <Plus size={18} /> Nova Conta
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   )}

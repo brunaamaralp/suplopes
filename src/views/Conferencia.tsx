@@ -4,30 +4,31 @@ import { Card, Button, Input, Select, Badge } from '../components/ui';
 import { FORMAT_CURRENCY, MovementType, DailyBalanceCorrection, ReconciliationStatus, Nature } from '../types';
 import { AlertTriangle, Save, Download, Lock, ChevronLeft, ChevronRight, CheckCircle, Calendar, Wallet, ShieldCheck, Unlock } from 'lucide-react';
 import { exportToCSV } from '../services/export';
+import { getTodayBrasilia } from '../utils/dateUtils';
 
 const ITEMS_PER_PAGE = 20;
 
 export const Conferencia: React.FC = () => {
   const { accounts, transactions, corrections, categories, setCorrection, closingDate, setClosingDate, notify } = useFinance();
-  
-  // Main state: selected date for daily reconciliation
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Main state: selected date for daily reconciliation (using Brasília timezone)
+  const [selectedDate, setSelectedDate] = useState(getTodayBrasilia());
   const [saving, setSaving] = useState(false);
-  
+
   // State for bank balances input (key: accountId, value: number or '')
   const [bankBalances, setBankBalances] = useState<Record<string, number | ''>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
-  
+
   // History filters
   const [historyMonth, setHistoryMonth] = useState(new Date().toISOString().slice(0, 7));
   const [showOnlyDivergent, setShowOnlyDivergent] = useState(false);
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Closing period state
   const [newClosingDate, setNewClosingDate] = useState(closingDate || '');
   const [savingClosing, setSavingClosing] = useState(false);
-  
+
   const isLockedDate = closingDate ? (selectedDate <= closingDate) : false;
 
   // Calculate system balance for an account up to a date
@@ -51,7 +52,7 @@ export const Conferencia: React.FC = () => {
     const dateCorrections = corrections.filter(c => c.date === selectedDate);
     const balances: Record<string, number | ''> = {};
     const notesMap: Record<string, string> = {};
-    
+
     for (const acc of accounts) {
       const existing = dateCorrections.find(c => c.bankAccountId === acc.id);
       if (existing && typeof existing.bankBalance === 'number') {
@@ -61,7 +62,7 @@ export const Conferencia: React.FC = () => {
       }
       notesMap[acc.id] = existing?.notes || '';
     }
-    
+
     setBankBalances(balances);
     setNotes(notesMap);
   }, [selectedDate, corrections, accounts]);
@@ -75,7 +76,7 @@ export const Conferencia: React.FC = () => {
       const difference = hasInput ? bankBalance - systemBalance : 0;
       const isDivergent = hasInput && Math.abs(difference) > 0.01;
       const existingCorrection = corrections.find(c => c.date === selectedDate && c.bankAccountId === acc.id);
-      
+
       return {
         account: acc,
         systemBalance,
@@ -118,16 +119,16 @@ export const Conferencia: React.FC = () => {
       notify('error', 'Não é possível alterar conferências de períodos fechados');
       return;
     }
-    
+
     setSaving(true);
     let failed = 0;
-    
+
     for (const item of dailySummary) {
       // Only save if user has input a value
       if (!item.hasInput) continue;
-      
+
       const status: ReconciliationStatus = item.isDivergent ? 'PENDING' : 'CONCILIATED';
-      
+
       const res = await setCorrection({
         id: item.existingCorrection?.id,
         date: selectedDate,
@@ -138,12 +139,12 @@ export const Conferencia: React.FC = () => {
         status,
         notes: item.note || undefined,
       });
-      
+
       if (!res.ok) failed++;
     }
-    
+
     setSaving(false);
-    
+
     if (failed > 0) {
       notify('error', `Falha ao salvar ${failed} conferência(s)`);
     } else {
@@ -161,7 +162,7 @@ export const Conferencia: React.FC = () => {
         const currentSystemBalance = acc ? calculateSystemBalance(c.bankAccountId, c.date, acc.initialBalance || 0) : 0;
         const bankBal = typeof c.bankBalance === 'number' ? c.bankBalance : 0;
         const diff = bankBal - currentSystemBalance;
-        
+
         return {
           ...c,
           accountName: acc?.name || 'Conta Removida',
@@ -288,15 +289,14 @@ export const Conferencia: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {dailySummary.map((item, idx) => (
-              <Card 
-                key={item.account.id} 
-                className={`p-0 overflow-hidden border-2 transition-all duration-300 ${
-                  !item.hasInput 
-                    ? 'border-glass' 
-                    : item.isDivergent 
-                      ? 'border-negative/30 shadow-[0_0_15px_rgba(239,68,68,0.08)]' 
+              <Card
+                key={item.account.id}
+                className={`p-0 overflow-hidden border-2 transition-all duration-300 ${!item.hasInput
+                    ? 'border-glass'
+                    : item.isDivergent
+                      ? 'border-negative/30 shadow-[0_0_15px_rgba(239,68,68,0.08)]'
                       : 'border-positive/30 shadow-[0_0_15px_rgba(34,197,94,0.08)]'
-                }`}
+                  }`}
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
                   {/* Account Name */}
@@ -329,16 +329,14 @@ export const Conferencia: React.FC = () => {
                       onChange={e => handleBalanceChange(item.account.id, e.target.value)}
                       placeholder="0,00"
                       disabled={isLockedDate}
-                      className={`w-full bg-input border border-glass rounded-lg px-4 py-2 text-xl font-bold font-mono text-right focus:outline-none focus:border-primary transition-all ${
-                        isLockedDate ? 'opacity-50 cursor-not-allowed' : ''
-                      } ${item.isDivergent ? 'border-negative/50 focus:border-negative' : ''}`}
+                      className={`w-full bg-input border border-glass rounded-lg px-4 py-2 text-xl font-bold font-mono text-right focus:outline-none focus:border-primary transition-all ${isLockedDate ? 'opacity-50 cursor-not-allowed' : ''
+                        } ${item.isDivergent ? 'border-negative/50 focus:border-negative' : ''}`}
                     />
                   </div>
 
                   {/* Difference */}
-                  <div className={`lg:col-span-2 p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-glass/50 ${
-                    !item.hasInput ? 'bg-glass/5' : item.isDivergent ? 'bg-negative/5' : 'bg-positive/5'
-                  }`}>
+                  <div className={`lg:col-span-2 p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-glass/50 ${!item.hasInput ? 'bg-glass/5' : item.isDivergent ? 'bg-negative/5' : 'bg-positive/5'
+                    }`}>
                     <span className="text-xs font-medium text-textSecondary mb-1">Diferença</span>
                     {!item.hasInput ? (
                       <span className="text-lg text-textSecondary/50 font-mono">—</span>
@@ -362,9 +360,8 @@ export const Conferencia: React.FC = () => {
                       onChange={e => handleNoteChange(item.account.id, e.target.value)}
                       placeholder="Opcional..."
                       disabled={isLockedDate}
-                      className={`w-full bg-input/50 border border-glass rounded px-3 py-1.5 text-sm focus:outline-none focus:border-primary/50 ${
-                        isLockedDate ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
+                      className={`w-full bg-input/50 border border-glass rounded px-3 py-1.5 text-sm focus:outline-none focus:border-primary/50 ${isLockedDate ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                     />
                   </div>
                 </div>
@@ -481,9 +478,8 @@ export const Conferencia: React.FC = () => {
                               <td className="py-3 px-6 font-medium text-textPrimary">{item.accountName}</td>
                               <td className="py-3 px-6 text-right font-mono text-textSecondary">{FORMAT_CURRENCY(item.systemBalance)}</td>
                               <td className="py-3 px-6 text-right font-mono font-medium text-textPrimary">{FORMAT_CURRENCY(item.bankBalance)}</td>
-                              <td className={`py-3 px-6 text-right font-mono font-bold ${
-                                Math.abs(item.difference) <= 0.01 ? 'text-textSecondary/50' : (item.difference > 0 ? 'text-positive' : 'text-negative')
-                              }`}>
+                              <td className={`py-3 px-6 text-right font-mono font-bold ${Math.abs(item.difference) <= 0.01 ? 'text-textSecondary/50' : (item.difference > 0 ? 'text-positive' : 'text-negative')
+                                }`}>
                                 {item.difference > 0 ? '+' : ''}{FORMAT_CURRENCY(item.difference)}
                               </td>
                               <td className="py-3 px-6 text-center">
@@ -546,7 +542,7 @@ export const Conferencia: React.FC = () => {
               <div className="flex-1">
                 <h4 className="font-semibold text-textPrimary mb-1">Proteger Período Conferido</h4>
                 <p className="text-sm text-textSecondary mb-4">
-                  Ao definir uma data limite, todas as movimentações com data <strong>igual ou anterior</strong> ficarão 
+                  Ao definir uma data limite, todas as movimentações com data <strong>igual ou anterior</strong> ficarão
                   bloqueadas para edição e exclusão. Use este recurso após conferir e validar os saldos do período.
                 </p>
 
@@ -641,8 +637,8 @@ export const Conferencia: React.FC = () => {
             <div className="flex items-start gap-3">
               <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
               <p className="text-xs text-warning/80">
-                <strong>Atenção:</strong> Após fechar um período, não será possível adicionar, editar ou excluir 
-                movimentações com data anterior ou igual à data limite. Certifique-se de que todas as conferências 
+                <strong>Atenção:</strong> Após fechar um período, não será possível adicionar, editar ou excluir
+                movimentações com data anterior ou igual à data limite. Certifique-se de que todas as conferências
                 estão corretas antes de prosseguir.
               </p>
             </div>

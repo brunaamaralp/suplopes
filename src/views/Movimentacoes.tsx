@@ -237,10 +237,10 @@ export const Movimentacoes: React.FC = () => {
         amount: Number(formData.amount || 0),
       } as any;
       try {
+        // Salva OUT primeiro
         const r1 = editingId ? await updateTransaction(outTx) : await addTransaction(outTx);
-        const r2 = editingId ? await updateTransaction(inTx) : await addTransaction(inTx);
-        if (!r1.ok || !r2.ok) {
-          const apiErrors = (r1.errors || []).concat(r2.errors || []);
+        if (!r1.ok) {
+          const apiErrors = r1.errors || [];
           const mapped: typeof formErrors = {};
           apiErrors.forEach((err: any) => {
             if (err.field && err.message) {
@@ -251,8 +251,31 @@ export const Movimentacoes: React.FC = () => {
           setFormErrors(mapped);
           return;
         }
+
+        // Salva IN - se falhar, faz rollback do OUT
+        const r2 = editingId ? await updateTransaction(inTx) : await addTransaction(inTx);
+        if (!r2.ok) {
+          // Rollback: exclui OUT que foi salvo
+          if (!editingId) {
+            await deleteTransaction(outTx.id);
+          }
+          const apiErrors = r2.errors || [];
+          const mapped: typeof formErrors = {};
+          apiErrors.forEach((err: any) => {
+            if (err.field && err.message) {
+              const key = err.field as keyof typeof mapped;
+              (mapped as any)[key] = err.message;
+            }
+          });
+          setFormErrors(mapped);
+          notify('error', 'Falha ao salvar transferência. Operação cancelada.');
+          return;
+        }
+
         setIsFormOpen(false);
-      } catch { }
+      } catch (e) {
+        notify('error', 'Erro inesperado ao salvar transferência');
+      }
       return;
     }
 
