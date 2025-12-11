@@ -79,3 +79,12 @@ model Reconciliation {
   @@index([userId])
 }
 
+model Settings {
+  id          Int      @id @default(autoincrement())
+  userId      String   @unique // UUID do usuário Supabase - único por usuário
+  closingDate String?  // Data de fechamento YYYY-MM-DD
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}

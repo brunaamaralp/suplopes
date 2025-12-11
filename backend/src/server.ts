@@ -440,18 +440,35 @@ app.put('/api/corrections/:id', async (req, res) => {
 });
 
 // ----------------------
-// ROTAS DE SETTINGS (In-Memory)
+// ROTAS DE SETTINGS (Persistido no Banco)
 // ----------------------
-let closingDate: string | null = null;
-
-app.get('/api/settings/closingDate', (_req, res) => {
-  res.json({ closingDate });
+app.get('/api/settings/closingDate', async (req: AuthenticatedRequest, res) => {
+  try {
+    const settings = await prisma.settings.findUnique({
+      where: { userId: req.user.id }
+    });
+    res.json({ closingDate: settings?.closingDate || null });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao buscar configurações' });
+  }
 });
 
-app.post('/api/settings/closingDate', (req, res) => {
-  const { closingDate: newDate } = req.body;
-  closingDate = newDate;
-  res.json({ closingDate });
+app.post('/api/settings/closingDate', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { closingDate } = req.body;
+
+    const settings = await prisma.settings.upsert({
+      where: { userId: req.user.id },
+      update: { closingDate },
+      create: { userId: req.user.id, closingDate }
+    });
+
+    res.json({ closingDate: settings.closingDate });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao salvar configurações' });
+  }
 });
 
 // ----------------------

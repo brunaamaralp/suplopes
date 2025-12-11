@@ -54,7 +54,7 @@ export const Contas: React.FC = () => {
       }
       setFormData({ name: '', initialBalance: 0 });
       setFormErrors({});
-    } catch {}
+    } catch { }
   };
 
   const handleEdit = (acc: Account) => {
@@ -164,7 +164,11 @@ export const Contas: React.FC = () => {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => deleteAccount(acc.id)}
+                            onClick={() => {
+                              if (confirm('Tem certeza que deseja excluir esta conta? Esta ação não pode ser desfeita.')) {
+                                deleteAccount(acc.id);
+                              }
+                            }}
                             className="p-2 text-textSecondary hover:text-negative hover:bg-negative/10 rounded-lg transition-colors"
                             title="Excluir"
                           >

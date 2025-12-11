@@ -1,4 +1,4 @@
--- Script de Migração: Adicionar userId e limpar dados
+-- Script de Migração: Adicionar userId, Settings e limpar dados
 -- Execute no SQL Editor do Supabase (https://supabase.com/dashboard/project/umwhpuladpvcsbuuqury/sql)
 
 -- 1. Limpar todos os dados existentes (respeitar foreign keys)
@@ -24,3 +24,14 @@ CREATE INDEX IF NOT EXISTS "Reconciliation_userId_idx" ON "Reconciliation"("user
 ALTER TABLE "Account" ALTER COLUMN "userId" DROP DEFAULT;
 ALTER TABLE "Transaction" ALTER COLUMN "userId" DROP DEFAULT;
 ALTER TABLE "Reconciliation" ALTER COLUMN "userId" DROP DEFAULT;
+
+-- 7. Criar tabela Settings para persistir configurações por usuário
+CREATE TABLE IF NOT EXISTS "Settings" (
+  "id" SERIAL PRIMARY KEY,
+  "userId" TEXT NOT NULL UNIQUE,
+  "closingDate" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "Settings_userId_idx" ON "Settings"("userId");

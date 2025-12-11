@@ -663,7 +663,11 @@ export const Movimentacoes: React.FC = () => {
                   </div>
                   <div className="mt-3 flex justify-end gap-2">
                     <Button size="sm" variant="secondary" onClick={() => handleOpenForm(t)} disabled={!!isLocked} leftIcon={<Edit size={16} />}>Editar</Button>
-                    <Button size="sm" variant="danger" onClick={() => deleteTransaction(t.id)} disabled={!!isLocked} leftIcon={<Trash2 size={16} />}>Excluir</Button>
+                    <Button size="sm" variant="danger" onClick={() => {
+                      if (confirm('Tem certeza que deseja excluir esta movimentação?')) {
+                        deleteTransaction(t.id);
+                      }
+                    }} disabled={!!isLocked} leftIcon={<Trash2 size={16} />}>Excluir</Button>
                   </div>
                 </div>
               );
@@ -747,7 +751,11 @@ export const Movimentacoes: React.FC = () => {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => deleteTransaction(t.id)}
+                            onClick={() => {
+                              if (confirm('Tem certeza que deseja excluir esta movimentação?')) {
+                                deleteTransaction(t.id);
+                              }
+                            }}
                             className={`text-textSecondary ${isLocked ? 'opacity-30 cursor-not-allowed' : 'hover:text-negative'}`}
                             disabled={!!isLocked}
                             title={isLocked ? "Bloqueado por fechamento de período" : "Excluir"}
