@@ -96,7 +96,7 @@ const AuthenticatedApp: React.FC = () => {
             />
           </div>
 
-          <nav className="px-4 space-y-2">
+          <nav className="px-4 space-y-2 pb-32">
             {navItems.map(item => (
               <SidebarItem
                 key={item.id}
